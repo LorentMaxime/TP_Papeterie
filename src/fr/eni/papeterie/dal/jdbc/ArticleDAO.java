@@ -7,7 +7,7 @@ import java.util.List;
 public interface ArticleDAO {
     List<Article> selectAll();
     Article selectById(int id);
-    void delete(int id);
+    void delete(int id) throws DALException;
     void insert(Article article);
     void update(Article article);
 

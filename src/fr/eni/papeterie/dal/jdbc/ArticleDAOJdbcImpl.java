@@ -98,13 +98,13 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
      * @throws SQLException
      */
     @Override
-    public void delete(int id) { // requete préparée
+    public void delete(int id) throws DALException { // requete préparée
         try (Connection connection = JdbcTools.recupConnection()) {
             PreparedStatement reqPreparee = connection.prepareStatement(this.SQL_DELETE);
             reqPreparee.setInt(1, id);
             reqPreparee.executeUpdate();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new DALException("Erreur dans la méthode delete().");
         }
     }
 

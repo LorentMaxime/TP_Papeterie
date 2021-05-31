@@ -1,4 +1,4 @@
-package fr.eni.papeterie.dal.jdbc;
+package fr.eni.papeterie.dal;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
