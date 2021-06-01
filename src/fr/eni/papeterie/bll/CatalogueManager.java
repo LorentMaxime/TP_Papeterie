@@ -48,7 +48,7 @@ public class CatalogueManager {
         }
     }
 
-    public Article getArticles(int index) {
+    public Article getArticles(int index) throws DALException {
         return this.articleDAO.selectById(index);
     }
 

@@ -54,14 +54,14 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
      * @return l'article soit crayon soit ramette
      */
     @Override
-    public Article selectById(int id) { // Codé en requete non preparée
+    public Article selectById(int id) throws DALException{ // Codé en requete non preparée
         Article article = null;
         try (
                 Connection connection = JdbcTools.recupConnection();
-                Statement etat = connection.createStatement()
+                PreparedStatement etat = connection.prepareStatement(SELECT_BY_ID);
         ) {
-            String sql = SELECT_BY_ID;
-            ResultSet rs = etat.executeQuery(sql);
+            etat.setInt(1,id);
+            ResultSet rs = etat.executeQuery();
             if (rs.next()) {
                 if (rs.getString("type").trim().equalsIgnoreCase("RAMETTE")) {
                     article = new Ramette(
@@ -88,6 +88,7 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
+            throw new DALException("Erreur dans la méthode selectById().");
         }
         return article;
     }
@@ -130,10 +131,12 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
             if (article instanceof Ramette) {
                 etat.setInt(6, ((Ramette) article).getGrammage());
                 etat.setString(8, "RAMETTE");
+                etat.setNull(7,Types.VARCHAR);
             }
             if (article instanceof Stylo) {
                 etat.setString(7, ((Stylo) article).getCouleur());
                 etat.setString(8, "STYLO");
+                etat.setNull(6,Types.INTEGER);
             }
 
             etat.executeUpdate();
@@ -146,6 +149,7 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        System.out.println(article);
     }
 
     /**
