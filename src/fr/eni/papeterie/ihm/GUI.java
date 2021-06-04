@@ -1,9 +1,13 @@
 package fr.eni.papeterie.ihm;
 
+import fr.eni.papeterie.bll.BLLException;
 import fr.eni.papeterie.bll.CatalogueManager;
 import fr.eni.papeterie.bo.Article;
 import fr.eni.papeterie.bo.Couleur;
 import fr.eni.papeterie.bo.Ramette;
+import fr.eni.papeterie.bo.Stylo;
+import fr.eni.papeterie.dal.jdbc.DALException;
+import org.w3c.dom.css.RGBColor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +15,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GUI extends JFrame {
 
@@ -34,7 +41,7 @@ public class GUI extends JFrame {
     private JTextField champTxtStock;
     private JTextField champTxtPrix;
     //JRadioButon
-    private JRadioButton radioRammette;
+    private JRadioButton radioRamette;
     private JRadioButton radioStylo;
     //JCheckBox
     private JCheckBox ckbQuatreVingtGramme;
@@ -49,18 +56,54 @@ public class GUI extends JFrame {
     private JButton btnEnregistrer;
     private JButton btnSupprimer;
     private JButton btnSuivant;
+    // j'instancie une liste d'article
+    private List<Article> articleListe = new ArrayList<>();
+    private int index = 0;
+    private Article articleAafficher;
 
     public GUI() {
         this.setTitle("Application Papeterie");
         this.setSize(500, 400);
-        this.setResizable(false);// empeche de redimmensionner la fenetre
-        this.setAlwaysOnTop(true); // quand on change de fenetre ma fenetre reste visible
+        this.setResizable(false);// empeche de redimensionner la fenetre
+        this.setAlwaysOnTop(true); // quand on change de fenetre ma fenetre reste "on top""
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);//fenetre se ferme quand on stop le programme
         // Le tableau principal
         this.setContentPane(getPanneauPrincipal()); // Je colle le panneau principal sur le "support en bois".
+        panneauPrincipal.setBackground(new Color(0x085684)); // couleur de fond du panneau principal
         // 1 et un seul "panneau en bois", et on colle les "afffiches" sur le "panneau en bois"
         this.setVisible(true);
+
+        try {
+            CatalogueManager cm = CatalogueManager.getInstance();//J'appel CatalogueManager (BLL) dans cm
+            // Je rempli ma liste d'article
+            this.articleListe = cm.getCatalogue();
+        } catch (BLLException e) {
+            System.out.println(e.getMessage());
+        }
+
+        if (!this.articleListe.isEmpty()) {
+            this.articleAafficher = articleListe.get(0);// on récupère le 1er article (index initialisé à 0) de la liste (on veut modifier cet index pour aller au précédent ou suivant)
+            getChampTxtRef().setText(articleAafficher.getReference());
+            getChampTxtDesi().setText(articleAafficher.getDesignation());
+            getChampTxtMarque().setText(articleAafficher.getMarque());
+            getChampTxtStock().setText(String.valueOf(articleAafficher.getQteStock()));
+            getChampTxtPrix().setText(String.valueOf(articleAafficher.getPrixUnitaire()));
+            if (articleAafficher instanceof Ramette) {
+                getComboBoxCouleur().setEnabled(false);
+                getRadioRamette().setSelected(true);
+                if (((Ramette) articleAafficher).getGrammage() == 80) {
+                    getCheckbQuatreVingtGramme().setSelected(true);
+                } else {
+                    getCheckbCentGramme().setSelected(true);
+                }
+            }
+                if (articleAafficher instanceof Stylo) {
+                    getRadioStylo().setSelected(true);
+                    getComboBoxCouleur().setSelectedItem(Couleur.valueOf(((Stylo) articleAafficher).getCouleur())); // Clean code
+                }
+
+        }
     }
 
     public JPanel getPanneauPrincipal(){
@@ -150,21 +193,22 @@ public class GUI extends JFrame {
     public JPanel getPanneauType() {
         if (panneauType == null) {
             panneauType = new JPanel(); //Je crée le panneau panneauType
+            panneauType.setBackground(new Color(0xFF048FD0, true));
             panneauType.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
             //ajout des boutons radio au panneau principal
-            panneauType.add(getRadioRammette());
+            panneauType.add(getRadioRamette());
             panneauType.add(getRadioStylo());
             //placement des boutons radios
             gbc.gridy = 0;
             gbc.gridx = 0;
-            panneauType.add(getRadioRammette(),gbc);
+            panneauType.add(getRadioRamette(), gbc);
             gbc.gridy = 1;
             gbc.gridx = 0;
             panneauType.add(getRadioStylo(),gbc);
             ButtonGroup bg = new ButtonGroup(); // forme un groupe avec les deux boutons radios
             bg.add(getRadioStylo());
-            bg.add(getRadioRammette());
+            bg.add(getRadioRamette());
         }
         return panneauType;
     }
@@ -172,6 +216,7 @@ public class GUI extends JFrame {
     public JPanel getPanneauGrammage() {
         if (panneauGrammage == null) {
             panneauGrammage = new JPanel(); //Je crée le panneau panneauGrammage
+            panneauType.setBackground(new Color(0xFF048FD0, true));
             panneauGrammage.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
             // ajout des boutons radios au panneau principal
@@ -194,6 +239,7 @@ public class GUI extends JFrame {
     public JPanel getPanneauCouleur() {
         if (panneauCouleur == null) {
             panneauCouleur = new JPanel(); //Je crée le panneau panneauCouleur
+            panneauType.setBackground(new Color(0xFF048FD0, true));
             panneauCouleur.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
             panneauCouleur.add(getComboBoxCouleur());
@@ -207,6 +253,7 @@ public class GUI extends JFrame {
     public JLabel getlblRef(){
         if(lblRef == null){
             lblRef = new JLabel("Référence");
+            lblRef.setForeground(new Color(240, 242, 242));
         }
         return lblRef;
     }
@@ -214,6 +261,7 @@ public class GUI extends JFrame {
     public JLabel getlblDesi(){
         if(lblDesi == null){
             lblDesi = new JLabel("Désignation");
+            lblDesi.setForeground(new Color(240, 242, 242));
         }
         return lblDesi;
     }
@@ -221,6 +269,7 @@ public class GUI extends JFrame {
     public JLabel getLblMarque(){
         if(lblMarque == null){
             lblMarque = new JLabel("Marque");
+            lblMarque.setForeground(new Color(240, 242, 242));
         }
         return lblMarque;
     }
@@ -228,6 +277,7 @@ public class GUI extends JFrame {
     public JLabel getLblStock(){
         if(lblStock == null){
             lblStock = new JLabel("Stock");
+            lblStock.setForeground(new Color(240, 242, 242));
         }
         return lblStock;
     }
@@ -235,6 +285,7 @@ public class GUI extends JFrame {
     public JLabel getLblPrix(){
         if(lblPrix == null){
             lblPrix = new JLabel("Prix");
+            lblPrix.setForeground(new Color(240, 242, 242));
         }
         return lblPrix;
     }
@@ -242,6 +293,7 @@ public class GUI extends JFrame {
     public JLabel getLblType(){
         if(lblType == null){
             lblType = new JLabel("Type");
+            lblType.setForeground(new Color(240, 242, 242));
         }
         return lblType;
     }
@@ -249,6 +301,7 @@ public class GUI extends JFrame {
     public JLabel getLblGrammage(){
         if(lblGrammage == null){
             lblGrammage = new JLabel("Grammage");
+            lblGrammage.setForeground(new Color(240, 242, 242));
         }
         return lblGrammage;
     }
@@ -256,27 +309,28 @@ public class GUI extends JFrame {
    public JLabel getlblCouleur(){
         if(lblCouleur == null){
             lblCouleur = new JLabel("Couleur");
+            lblCouleur.setForeground(new Color(240, 242, 242));
         }
         return lblCouleur;
     }
 
     public JTextField getChampTxtRef() {
-            if (champTxtRef == null) {
-                champTxtRef = new JTextField("Saisissez la ref", 25);
-                champTxtRef.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        JTextField textField =((JTextField)e.getSource() );
-                        textField.setText("");
-                    }
-                });
-            }
-            return champTxtRef;
+        if (champTxtRef == null) {
+            champTxtRef = new JTextField("", 25);
+            champTxtRef.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    JTextField textField = ((JTextField) e.getSource());
+                    textField.setText("");
+                }
+            });
+        }
+        return champTxtRef;
     }
 
     public JTextField getChampTxtDesi() {
-        if (champTxtDesi== null) {
-            champTxtDesi = new JTextField("Saisissez la designation", 25);
+        if (champTxtDesi == null) {
+            champTxtDesi = new JTextField("", 25);
             champTxtDesi.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -289,8 +343,8 @@ public class GUI extends JFrame {
     }
 
     public JTextField getChampTxtMarque() {
-        if (champTxtMarque== null) {
-            champTxtMarque = new JTextField("saisissez la marque", 25);
+        if (champTxtMarque == null) {
+            champTxtMarque = new JTextField("", 25);
             champTxtMarque.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -303,8 +357,8 @@ public class GUI extends JFrame {
     }
 
     public JTextField getChampTxtStock() {
-        if (champTxtStock== null) {
-            champTxtStock = new JTextField("saisissez le stock", 25);
+        if (champTxtStock == null) {
+            champTxtStock = new JTextField("", 25);
             champTxtStock.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -317,8 +371,8 @@ public class GUI extends JFrame {
     }
 
     public JTextField getChampTxtPrix() {
-        if (champTxtPrix== null) {
-            champTxtPrix = new JTextField("saisissez le prix", 25);
+        if (champTxtPrix == null) {
+            champTxtPrix = new JTextField("", 25);
             champTxtPrix.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -330,44 +384,58 @@ public class GUI extends JFrame {
         return champTxtPrix;
     }
 
-    public JRadioButton getRadioRammette(){
-        if (radioRammette== null) {
-            radioRammette = new JRadioButton();
-            radioRammette.addActionListener(new ActionListener() {
+    public JRadioButton getRadioRamette() {
+        if (radioRamette == null) {
+            radioRamette = new JRadioButton("Ramette");
+            // Quand je clique sur le radio ramette
+            radioRamette.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    getComboBoxCouleur().setEnabled(false);
-                    getCheckbQuatreVingtGramme().doClick();
+                    getCheckbQuatreVingtGramme().doClick();// Je selectionne 80gr
+                    getCheckbQuatreVingtGramme().setEnabled(true); // 80gr activé
+                    getCheckbCentGramme().setEnabled(true); // 100gr activé
+                    getComboBoxCouleur().setEnabled(false); // combobox désactivée
                 }
             });
         }
-        return radioRammette;
+        return radioRamette;
     }
 
-    public JRadioButton getRadioStylo(){
-        if (radioStylo== null) {
-            radioStylo = new JRadioButton();
+    public JRadioButton getRadioStylo() {
+        if (radioStylo == null) {
+            radioStylo = new JRadioButton("Stylo");
+            // Quand je clique sur radio Stylo
+            radioStylo.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // desactive les 2 CheckBox
+                    getCheckbQuatreVingtGramme().setEnabled(false);
+                    getCheckbCentGramme().setEnabled(false);
+                    // active la combobox des couleurs
+                    getComboBoxCouleur().setEnabled(true);
+                }
+            });
         }
         return radioStylo;
     }
 
-    public JCheckBox getCheckbQuatreVingtGramme(){
-        if (ckbQuatreVingtGramme== null) {
-            ckbQuatreVingtGramme = new JCheckBox();
+    public JCheckBox getCheckbQuatreVingtGramme() {
+        if (ckbQuatreVingtGramme == null) {
+            ckbQuatreVingtGramme = new JCheckBox("80 grammes");
         }
         return ckbQuatreVingtGramme;
     }
 
-    public JCheckBox getCheckbCentGramme(){
-        if (ckbCentGramme== null) {
-            ckbCentGramme = new JCheckBox();
+    public JCheckBox getCheckbCentGramme() {
+        if (ckbCentGramme == null) {
+            ckbCentGramme = new JCheckBox("100 grammes");
         }
         return ckbCentGramme;
     }
 
-    public JComboBox getComboBoxCouleur(){
-        if (comboBoxCouleur== null) {
-            comboBoxCouleur = new JComboBox(Couleur.values());
+    public JComboBox getComboBoxCouleur() {
+        if (comboBoxCouleur == null) {
+            comboBoxCouleur = new JComboBox(Couleur.values());//appel de l'enumeration ds le package bo
         }
         return comboBoxCouleur;
     }
@@ -375,6 +443,7 @@ public class GUI extends JFrame {
     public JPanel getPanelBoutons(){
         if(panelBoutons == null){
             panelBoutons = new JPanel();
+            panelBoutons.setBackground(new Color(0xFF84327F, true));
             panelBoutons.add(getBtnPrecedent());
             panelBoutons.add(getBtnNouveau());
             panelBoutons.add(getBtnEnregistrer());
@@ -387,6 +456,24 @@ public class GUI extends JFrame {
     public JButton getBtnPrecedent(){
         if(btnPrecedent == null){
             btnPrecedent = new JButton(new ImageIcon("image/back24.gif"));
+            btnPrecedent.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    //getRadioRamette().setEnabled(false);
+                    //getRadioStylo().setEnabled(false);
+                    if (index <= 0) { // si index est egale à 0
+                        index = articleListe.size() - 1; // index est egale à la taille maxi de la liste (donc cyclique)
+                    } else {
+                        index--;
+                    }
+                    articleAafficher = articleListe.get(index);
+                    getChampTxtRef().setText(articleAafficher.getReference());
+                    getChampTxtDesi().setText(articleAafficher.getDesignation());
+                    getChampTxtMarque().setText(articleAafficher.getMarque());
+                    getChampTxtStock().setText(String.valueOf(articleAafficher.getQteStock()));
+                    getChampTxtPrix().setText(String.valueOf(articleAafficher.getPrixUnitaire()));
+                }
+            });
         }
         return btnPrecedent;
     }
@@ -394,6 +481,17 @@ public class GUI extends JFrame {
     public JButton getBtnNouveau() {
         if (btnNouveau == null) {
             btnNouveau = new JButton(new ImageIcon("image/New24.gif"));
+            btnNouveau.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    getChampTxtRef().setText("");
+                    getChampTxtDesi().setText("");
+                    getChampTxtMarque().setText("");
+                    getChampTxtStock().setText("");
+                    getChampTxtPrix().setText("");
+                    articleAafficher = null;
+                }
+            });
         }
         return btnNouveau;
     }
@@ -401,15 +499,46 @@ public class GUI extends JFrame {
     public JButton getBtnEnregistrer() {
         if (btnEnregistrer == null) {
             btnEnregistrer = new JButton(new ImageIcon("image/Save24.gif"));
-           /** btnEnregistrer.addActionListener(new ActionListener() {
+            btnEnregistrer.addActionListener(new ActionListener() {
                 @Override
-               public void actionPerformed(ActionEvent e) {
-                    CatalogueManager cm = CatalogueManager.getInstance();
-                    Article article = new Ramette();
-                    article.setDesignation(getChampTxtDesi().getText());// mais mettre ça dans un ty catch au cas ou le champs est vide
-                    cm.addArticle(article);
+                public void actionPerformed(ActionEvent e) {
+                   CatalogueManager cm = CatalogueManager.getInstance(); // J'appel la BLL
+                    if (articleAafficher != null){
+                        try {
+                            cm.updateArticle(articleAafficher);
+                        } catch (BLLException bllException) {
+                            bllException.printStackTrace();
+                        }
+                    }else {
+                        Article article = null;
+                        if (getRadioStylo().isSelected()) { // C'est un stylo
+                            article = new Stylo(
+                                    getChampTxtMarque().getText(),
+                                    getChampTxtRef().getText(),
+                                    getChampTxtDesi().getText(),
+                                    Float.parseFloat(getChampTxtPrix().getText()),
+                                    Integer.parseInt(getChampTxtStock().getText()),
+                                    getComboBoxCouleur().getSelectedItem().toString()
+                            );
+                        }
+                        if (getRadioRamette().isSelected()) { // C'est une Ramette
+                            article = new Ramette(
+                                    getChampTxtMarque().getText(),
+                                    getChampTxtRef().getText(),
+                                    getChampTxtDesi().getText(),
+                                    Float.parseFloat(getChampTxtPrix().getText()),
+                                    Integer.parseInt(getChampTxtStock().getText()),
+                                    (getCheckbQuatreVingtGramme().isSelected() ? 80 : 100)
+                            );
+                        }
+                        try {
+                            cm.addArticle(article);
+                        } catch (BLLException bllException) {
+                            bllException.printStackTrace();
+                        }
+                    }
                 }
-            });*/
+            });
         }
         return btnEnregistrer;
     }
@@ -417,13 +546,46 @@ public class GUI extends JFrame {
     public JButton getBtnSupprimer() {
         if (btnSupprimer == null) {
             btnSupprimer = new JButton(new ImageIcon("image/Delete24.gif"));
+            btnSupprimer.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    try{
+                        CatalogueManager cm = CatalogueManager.getInstance();
+                        cm.removeArticle(articleAafficher.getIdArticle());// Je le supprime en BDD
+                    }catch (BLLException | DALException bllException){
+                        bllException.printStackTrace();
+                    }
+                    articleListe.remove(articleAafficher);// Je le supprime de la liste d'articles
+                    getBtnSuivant().doClick(); // Je clique sur le bouton suivant
+                }
+            });
         }
         return btnSupprimer;
     }
 
     public JButton getBtnSuivant() {
+
         if (btnSuivant == null) {
             btnSuivant = new JButton(new ImageIcon("image/Forward24.gif"));
+            btnSuivant.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    //getRadioRamette().setEnabled(false);
+                    //getRadioStylo().setEnabled(false);
+                    if (index >= articleListe.size() - 1 ) { // si l'index est égale à la taille (le max) de la liste
+                        index = 0;                           // index reviens à 0  (donc cyclique)
+                    } else {
+                        index++;
+                    }
+                    Article articleaAfficher = articleListe.get(index);
+                    getChampTxtRef().setText(articleaAfficher.getReference());
+                    getChampTxtDesi().setText(articleaAfficher.getDesignation());
+                    getChampTxtMarque().setText(articleaAfficher.getMarque());
+                    getChampTxtStock().setText(String.valueOf(articleaAfficher.getQteStock()));
+                    getChampTxtPrix().setText(String.valueOf(articleaAfficher.getPrixUnitaire()));
+                }
+            });
         }
         return btnSuivant;
     }

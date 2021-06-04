@@ -19,6 +19,7 @@ import java.util.List;
  */
 
 public class ArticleDAOJdbcImpl implements ArticleDAO {
+    private final String SELECT_ALL = "SELECT * FROM Articles";
     private final String SELECT_BY_ID = "SELECT * FROM Articles WHERE idArticle=?";
     private final String SQL_DELETE = "DELETE FROM Articles WHERE idArticle=?";
     private final String SQL_UPDATE = "UPDATE Articles set " +
@@ -33,13 +34,35 @@ public class ArticleDAOJdbcImpl implements ArticleDAO {
      * @return une liste d'articles
      */
     @Override
-    public List<Article> selectAll(){
-        List<Article>articleList = new ArrayList<>();
-        try(Connection connection = JdbcTools.recupConnection();) {
-
-            Statement etat = connection.createStatement();
-            String sql = "SELECT * FROM article";
-            etat.executeQuery(sql);
+    public List<Article> selectAll() {
+        Article article = null;
+        List<Article> articleList = new ArrayList<>();
+        try (
+                Connection connection = JdbcTools.recupConnection();
+                PreparedStatement etat = connection.prepareStatement(SELECT_ALL);
+        ) {
+            ResultSet rs = etat.executeQuery();
+            while (rs.next()) {
+                if (rs.getString("type").trim().equalsIgnoreCase("RAMETTE")) {
+                    article = new Ramette(rs.getInt("idArticle"),
+                            rs.getString("marque"),
+                            rs.getString("reference"),
+                            rs.getString("designation"),
+                            rs.getFloat("prixUnitaire"),
+                            rs.getInt("qteStock"),
+                            rs.getInt("grammage"));
+                }
+                if (rs.getString("type").trim().equalsIgnoreCase("STYLO")) {
+                    article = new Stylo(rs.getInt("idArticle"),
+                            rs.getString("marque"),
+                            rs.getString("reference"),
+                            rs.getString("designation"),
+                            rs.getFloat("prixUnitaire"),
+                            rs.getInt("qteStock"),
+                            rs.getString("couleur"));
+                }
+                articleList.add(article);
+            }
         } catch (SQLException throwables) {
             throwables.getMessage();
         }

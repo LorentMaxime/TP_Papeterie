@@ -16,10 +16,10 @@ public class CatalogueManager {
     // Je crée une instance du type de mon manager en privé
     private static CatalogueManager instance;
 
-    private CatalogueManager() throws BLLException {
+    private CatalogueManager() {
     }
 
-    public static CatalogueManager getInstance() throws BLLException {
+    public static CatalogueManager getInstance() {
         if (instance == null) {
             instance = new CatalogueManager();
         }
@@ -32,7 +32,7 @@ public class CatalogueManager {
 
     public void addArticle(Article a) throws BLLException {
         this.validerArticles(a);
-        this.articleDAO.update(a);
+        this.articleDAO.insert(a);
     }
 
     public void updateArticle(Article a) throws BLLException {

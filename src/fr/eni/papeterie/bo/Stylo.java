@@ -27,7 +27,7 @@ public class Stylo extends Article{
     @Override
     public String toString() {
         return "Stylo{" +
-                "couleur='" + couleur + '\'' +
+                "id='" + super.getIdArticle() + '\'' +
                 '}';
     }
 }

@@ -1,5 +1,5 @@
-package fr.eni.papeterie.dal
-        ;
+package fr.eni.papeterie.dal;
+
 
 import java.util.Properties;
 
@@ -20,6 +20,4 @@ public class Settings {
         String parametre = propriete.getProperty(cle, null);
         return parametre;
     }
-
-
 }

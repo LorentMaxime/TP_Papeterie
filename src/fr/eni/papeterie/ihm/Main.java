@@ -9,6 +9,6 @@ public class Main {
                     JFrame app = new GUI();
                 }
         );
-        JFrame app = new GUI();
+
     }
 }
